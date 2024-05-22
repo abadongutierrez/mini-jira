@@ -1,3 +1,6 @@
 spring:
   application:
     name: mini-jira
+  jpa:
+      hibernate:
+        ddl-auto: none
