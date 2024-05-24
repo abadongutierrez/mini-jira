@@ -1,5 +1,6 @@
 package com.jabaddon.miniprojects.minijira;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -26,11 +27,22 @@ class TaskListDomainRepositoryImpl implements TaskListDomainRepository {
     @Override
     public Optional<TaskList> findById(Long id) {
         Optional<TaskListJpaEntity> taskListJpaEntity = taskListJpaRepository.findById(id);
-        return taskListJpaEntity.map(
-                t -> new TaskList(t.id,
-                    t.name,
-                    TaskListType.valueOf(t.type),
-                    TaskListStatus.valueOf(t.status)));
+        return taskListJpaEntity.map(this::mapToDomainEntity);
     }
 
+    @Override
+    public List<TaskList> findAll() {
+        List<TaskListJpaEntity> taskListJpaEntities = taskListJpaRepository.findAll();
+        return taskListJpaEntities.stream()
+                .map(this::mapToDomainEntity)
+                .toList();
+    }
+
+    private TaskList mapToDomainEntity(TaskListJpaEntity taskListJpaEntity) {
+        return new TaskList(
+                taskListJpaEntity.id,
+                taskListJpaEntity.name,
+                TaskListType.valueOf(taskListJpaEntity.type),
+                TaskListStatus.valueOf(taskListJpaEntity.status));
+    }
 }

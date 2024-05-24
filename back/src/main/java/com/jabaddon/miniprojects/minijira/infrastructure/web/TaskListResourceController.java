@@ -1,9 +1,11 @@
 package com.jabaddon.miniprojects.minijira.infrastructure.web;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +16,7 @@ import com.jabaddon.miniprojects.minijira.TaskListAppService;
 import com.jabaddon.miniprojects.minijira.TaskListRequest;
 import com.jabaddon.miniprojects.minijira.TaskListResponse;
 
+@CrossOrigin(origins = "*", exposedHeaders = "Location")
 @RestController
 class TaskListResourceController {
 
@@ -39,5 +42,12 @@ class TaskListResourceController {
             return ResponseEntity.notFound().build();
         }
         return taskList.map(t -> ResponseEntity.ok(t)).get();
+    }
+
+    @GetMapping("/task-list")
+    public ResponseEntity<List<TaskListResponse>> getAllTaskLists() {
+        // TODO implement pagination and filtering
+        List<TaskListResponse> taskLists = taskListAppService.getAllTaskLists();
+        return ResponseEntity.ok(taskLists);
     }
 }

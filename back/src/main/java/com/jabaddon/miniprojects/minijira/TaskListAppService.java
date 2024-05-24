@@ -1,6 +1,8 @@
 package com.jabaddon.miniprojects.minijira;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -20,9 +22,19 @@ public class TaskListAppService {
         return taskListDomainRepository.save(taskList);
     }
 
+    public List<TaskListResponse> getAllTaskLists() {
+        List<TaskList> taskLists = taskListDomainRepository.findAll();
+        return taskLists.stream()
+                .map(this::mapToTaskListResponse)
+                .toList();
+    }
+
     public Optional<TaskListResponse> findById(Long id) {
-        return taskListDomainRepository.findById(id).map(
-            t -> new TaskListResponse(t.getId(),
-                t.getName(), t.getType().name(), t.getStatus().name()));
+        Optional<TaskList> taskList = taskListDomainRepository.findById(id);
+        return taskList.map(this::mapToTaskListResponse);
+    }
+
+    private TaskListResponse mapToTaskListResponse(TaskList taskList) {
+        return new TaskListResponse(taskList.getId(), taskList.getName(), taskList.getType().name(), taskList.getStatus().name());
     }
 }

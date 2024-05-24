@@ -1,34 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useQuery } from 'react-query';
+import { Route, Switch } from "wouter";
 import './App.css'
+import TaskLists from './task-lists/components/TaskLists'
+import { getAllTaskLists } from './task-lists/fetch';
+import NewTaskList from './task-lists/components/NewTaskList';
+import TaskListDetail from './task-lists/components/TaskListDetail';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { data: taskLists, isLoading, isError } = useQuery('taskLists', getAllTaskLists);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error fetching task lists</div>;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div>
+      <Switch>
+        <Route path="/task-list/:id">
+          {(params) => params.id === 'new' ? <NewTaskList /> : <TaskListDetail id={params.id} />}
+        </Route>
+        <Route path="/task-list">
+          <TaskLists taskLists={taskLists} />
+        </Route>
+        <Route path="/">
+          Home
+        </Route>
+        {/* Add more routes as needed */}
+      </Switch>
+    </div>
   )
 }
 
