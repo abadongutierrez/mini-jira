@@ -12,42 +12,42 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.jabaddon.miniprojects.minijira.TaskListAppService;
-import com.jabaddon.miniprojects.minijira.TaskListRequest;
-import com.jabaddon.miniprojects.minijira.TaskListResponse;
+import com.jabaddon.miniprojects.minijira.MiniJiraAppService;
+import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
+import com.jabaddon.miniprojects.minijira.dto.TaskGroupResponse;
 
 @CrossOrigin(origins = "*", exposedHeaders = "Location")
 @RestController
-class TaskListResourceController {
+class MiniJiraResourceController {
 
-    private final TaskListAppService taskListAppService;
+    private final MiniJiraAppService taskListAppService;
 
-    public TaskListResourceController(TaskListAppService taskListAppService) {
+    public MiniJiraResourceController(MiniJiraAppService taskListAppService) {
         this.taskListAppService = taskListAppService;
     }
 
-    @PostMapping("/task-list")
-    public ResponseEntity<Void> createTaskList(@RequestBody TaskListRequest taskListRequest) {
-        Long newId = taskListAppService.createTaskList(taskListRequest);
+    @PostMapping("/task-groups")
+    public ResponseEntity<Void> createTaskList(@RequestBody NewTaskGroupRequest taskListRequest) {
+        Long newId = taskListAppService.createTaskGroup(taskListRequest);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .header("Location", "/task-list/" + newId)
             .build();
     }
 
-    @GetMapping("/task-list/{id}")
-    public ResponseEntity<TaskListResponse> getTaskListById(@PathVariable Long id) {
-        Optional<TaskListResponse> taskList = taskListAppService.findById(id);
+    @GetMapping("/task-groups/{id}")
+    public ResponseEntity<TaskGroupResponse> getTaskListById(@PathVariable Long id) {
+        Optional<TaskGroupResponse> taskList = taskListAppService.findById(id);
         if (taskList.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         return taskList.map(t -> ResponseEntity.ok(t)).get();
     }
 
-    @GetMapping("/task-list")
-    public ResponseEntity<List<TaskListResponse>> getAllTaskLists() {
+    @GetMapping("/task-groups")
+    public ResponseEntity<List<TaskGroupResponse>> getAllTaskLists() {
         // TODO implement pagination and filtering
-        List<TaskListResponse> taskLists = taskListAppService.getAllTaskLists();
+        List<TaskGroupResponse> taskLists = taskListAppService.getAllTaskGroups();
         return ResponseEntity.ok(taskLists);
     }
 }

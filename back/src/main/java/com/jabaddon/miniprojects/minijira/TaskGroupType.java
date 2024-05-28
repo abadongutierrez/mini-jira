@@ -1,5 +1,5 @@
 package com.jabaddon.miniprojects.minijira;
 
-enum TaskListType {
+enum TaskGroupType {
     BACKLOG, SPRINT
 }

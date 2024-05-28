@@ -1,5 +1,5 @@
 package com.jabaddon.miniprojects.minijira;
 
-enum TaskListStatus {
+enum TaskGroupStatus {
     NOT_STARTED
 }

@@ -3,3 +3,15 @@ spring:
     url: jdbc:postgresql://localhost:5432/minijira_db_dev
     username: test
     password: test
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+      org:
+        hibernate:
+          SQL: DEBUG
+          type:
+            descriptor:
+              sql:
+                BasicBinder: TRACE

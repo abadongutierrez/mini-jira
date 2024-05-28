@@ -8,16 +8,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "task_list")
-class TaskListJpaEntity {
+@Table(name = "task_groups")
+class TaskGroupJpaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, name = "id")
     Long id;
+
     @Column(nullable = false, name = "name")
     String name;
+
     @Column(nullable = false, name = "type")
     String type;
+
     @Column(nullable = false, name = "status")
     String status;
 }
