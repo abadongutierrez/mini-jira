@@ -24,7 +24,6 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
     public Long save(TaskGroup taskList) {
         TaskGroupJpaEntity taskListJpaEntity = new TaskGroupJpaEntity();
         taskListJpaEntity.name = taskList.getName();
-        taskListJpaEntity.type = taskList.getType().name();
         taskListJpaEntity.status = taskList.getStatus().name();
         TaskGroupJpaEntity persisted = taskGroupJpaRepository.save(taskListJpaEntity);
         return persisted.id;
@@ -52,23 +51,25 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
                 .ifPresent(taskGroupJpaEntity -> {
                     List<Task> tasks = taskGroup.getTasks();
                     Stream<Task> taskWithIdNull = tasks.stream().filter(t -> t.getId() == null);
-                    List<TaskJpaEntity> newTasks = taskWithIdNull.map(t -> {
-                        TaskJpaEntity taskJpaEntity = new TaskJpaEntity();
-                        taskJpaEntity.name = t.getName();
-                        taskJpaEntity.description = t.getDescription();
-                        taskJpaEntity.estimation = t.getEstimation();
-                        taskJpaEntity.taskGroupId = taskGroupJpaEntity.id;
-                        return taskJpaEntity;
-                    }).toList();
+                    List<TaskJpaEntity> newTasks = taskWithIdNull
+                        .map(t -> mapTaskToTaskJpaEntity(taskGroupJpaEntity, t)).toList();
                     taskJpaRepository.saveAll(newTasks);
                 });
+    }
+
+    private TaskJpaEntity mapTaskToTaskJpaEntity(TaskGroupJpaEntity taskGroupJpaEntity, Task t) {
+        TaskJpaEntity taskJpaEntity = new TaskJpaEntity();
+        taskJpaEntity.name = t.getName();
+        taskJpaEntity.description = t.getDescription();
+        taskJpaEntity.estimation = t.getEstimation();
+        taskJpaEntity.taskGroupId = taskGroupJpaEntity.id;
+        return taskJpaEntity;
     }
 
     private TaskGroup mapToDomainEntity(TaskGroupJpaEntity taskListJpaEntity) {
         TaskGroup tg = new TaskGroup(
                 taskListJpaEntity.id,
                 taskListJpaEntity.name,
-                TaskGroupType.valueOf(taskListJpaEntity.type),
                 TaskGroupStatus.valueOf(taskListJpaEntity.status));
         taskJpaRepository.findByTaskGroupId(taskListJpaEntity.id)
             .forEach(t -> tg.addTask(t.id, t.name, t.description, t.estimation));
@@ -84,4 +85,17 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
         IterationJpaEntity newIteration = iterationJpaRepository.save(iterationJpaEntity);
         return newIteration.id;
     }
+
+    @Override
+    public Optional<TaskGroup> findByName(String name) {
+        Optional<TaskGroupJpaEntity> taskListJpaEntity = taskGroupJpaRepository.findByName(name);
+        return taskListJpaEntity.map(this::mapToDomainEntity);
+    }
+
+    @Override
+    public boolean existsTaskByName(String name) {
+        return taskJpaRepository.findByName(name).isPresent();
+    }
+
+    
 }

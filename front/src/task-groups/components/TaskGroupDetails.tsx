@@ -1,12 +1,12 @@
 import { useQuery } from 'react-query';
-import { getTaskList } from '../fetch';
+import { getTaskGroup } from '../fetch';
 
-interface TaskListDetailProps {
+interface TaskGroupDetailsProps {
   id: string;
 }
 
-const TaskListDetail: React.FC<TaskListDetailProps> = ({ id }) => {
-  const { data: taskList, isLoading, isError } = useQuery(['taskList', id], () => getTaskList(id));
+const TaskGroupDetails: React.FC<TaskGroupDetailsProps> = ({ id }) => {
+  const { data: taskList, isLoading, isError } = useQuery(['taskList', id], () => getTaskGroup(id));
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -25,4 +25,4 @@ const TaskListDetail: React.FC<TaskListDetailProps> = ({ id }) => {
   );
 }
 
-export default TaskListDetail;
+export default TaskGroupDetails;

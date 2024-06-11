@@ -1,33 +1,42 @@
 package com.jabaddon.miniprojects.minijira;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.typemeta.funcj.control.Either;
+import org.typemeta.funcj.control.Try;
 
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskRequest;
 import com.jabaddon.miniprojects.minijira.dto.TaskGroupResponse;
 import com.jabaddon.miniprojects.minijira.dto.TaskResponse;
 import com.jabaddon.miniprojects.minijira.dto.TasksInGroupResponse;
+import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
 
 @Service
 public class MiniJiraAppService {
 
     private final TaskGroupDomainRepository taskGroupDomainRepository;
+    private final TaskGroupFactory taskGroupFactory;
 
-    public MiniJiraAppService(TaskGroupDomainRepository taskListRepository) {
+    public MiniJiraAppService(TaskGroupDomainRepository taskListRepository, TaskGroupFactory taskGroupFactory) {
         this.taskGroupDomainRepository = taskListRepository;
+        this.taskGroupFactory = taskGroupFactory;
     }
 
-    public Long createTaskGroup(NewTaskGroupRequest request) {
-        // TODO create factory
-        // only one Backlog type in the database
-        TaskGroup taskList = new TaskGroup(request.name(), TaskGroupType.valueOf(request.type()));
-        return taskGroupDomainRepository.save(taskList);
+    public Either<RuntimeException, Long> createTaskGroup(NewTaskGroupRequest request) {
+        return taskGroupFactory.createTaskGroup(request)
+                .flatMap(newTaskGroup -> Either.of(() -> taskGroupDomainRepository.save(newTaskGroup)));
     }
+
+    /*
+    public Either<Exception, Long> createTaskGroup(NewTaskGroupRequest request) {
+        TaskGroup newTaskGroup = taskGroupFactory.createTaskGroup(request);
+        return taskGroupDomainRepository.save(newTaskGroup);
+    }
+     */
 
     public List<TaskGroupResponse> getAllTaskGroups() {
         List<TaskGroup> taskLists = taskGroupDomainRepository.findAll();
@@ -42,29 +51,40 @@ public class MiniJiraAppService {
     }
 
     private TaskGroupResponse mapToTaskListResponse(TaskGroup taskList) {
-        return new TaskGroupResponse(taskList.getId(), taskList.getName(), taskList.getType().name(), taskList.getStatus().name());
+        return new TaskGroupResponse(taskList.getId(), taskList.getName(), taskList.getStatus().name());
     }
 
-    public void addTask(NewTaskRequest taskCreationRequest) {
-        taskGroupDomainRepository.findById(taskCreationRequest.taskGroupId())
-                .ifPresent(taskGroup -> {
-                    taskGroup.addTask(
-                        taskCreationRequest.name(),
-                        taskCreationRequest.description(),
-                        taskCreationRequest.estimation());
-                    taskGroupDomainRepository.saveNewTasks(taskGroup);
-                });
-    }
-
-    public TasksInGroupResponse getTasksInGroup(Long id) {
-        Optional<TaskGroup> taskGroup = taskGroupDomainRepository.findById(id);
-        if (taskGroup.isEmpty()) {
-            return null;
+    public Either<Exception, Long> addTask(NewTaskRequest taskCreationRequest) {
+        Optional<TaskGroup> groupById = taskGroupDomainRepository.findById(taskCreationRequest.taskGroupId());
+        if (groupById.isPresent()) {
+            TaskGroup taskGroup = groupById.get();
+            return taskGroupFactory.validateUniqueTaskName(taskCreationRequest.name())
+                    .flatMap(_ ->
+                        taskGroup.addTask(
+                            taskCreationRequest.name(),
+                            taskCreationRequest.description(),
+                            taskCreationRequest.estimation()))
+                    .flatMap(_ -> Either.of(() -> {
+                        taskGroupDomainRepository.saveNewTasks(taskGroup);
+                        return taskGroup.getId();
+                    }));
+        } else {
+            return Either.left(new NotFoundException("Task Group not found"));
         }
-        TaskGroup tp = taskGroup.get();
-        TasksInGroupResponse response = new TasksInGroupResponse(
-                tp.getTasks().stream().map(t -> new TaskResponse(t.getId(), t.getName(), t.getDescription())).toList());
-        return response;
+    }
+
+    public Try<TasksInGroupResponse> getTasksInGroup(Long id) {
+        Try<Optional<TaskGroup>> of = Try.of(() -> taskGroupDomainRepository.findById(id));
+        return of.flatMap(taskGroup -> {
+                    if (taskGroup.isEmpty()) {
+                        return Try.failure(new NotFoundException("Task Group not found"));
+                    }
+                    TaskGroup tp = taskGroup.get();
+                    TasksInGroupResponse response = new TasksInGroupResponse(
+                        tp.getTasks().stream()
+                            .map(t -> new TaskResponse(t.getId(), t.getName(), t.getDescription())).toList());
+                    return Try.success(response);
+                });
     }
 
     public Long startIteration(Long groupId, LocalDateTime now, LocalDateTime plusDays) {

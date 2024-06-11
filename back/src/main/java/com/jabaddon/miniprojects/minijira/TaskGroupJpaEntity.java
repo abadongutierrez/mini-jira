@@ -18,9 +18,6 @@ class TaskGroupJpaEntity {
     @Column(nullable = false, name = "name")
     String name;
 
-    @Column(nullable = false, name = "type")
-    String type;
-
     @Column(nullable = false, name = "status")
     String status;
 }

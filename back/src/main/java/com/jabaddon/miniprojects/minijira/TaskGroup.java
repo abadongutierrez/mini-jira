@@ -1,10 +1,11 @@
 package com.jabaddon.miniprojects.minijira;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.typemeta.funcj.control.Either;
 
 import lombok.Getter;
 
@@ -12,20 +13,17 @@ import lombok.Getter;
 class TaskGroup {
     private Long id;
     private final String name;
-    private final TaskGroupType type;
     private final TaskGroupStatus status;
     private final List<Task> taskList = new ArrayList<>();
 
-    public TaskGroup(String name, TaskGroupType type) {
+    TaskGroup(String name) {
         this.name = name;
-        this.type = type;
         this.status = TaskGroupStatus.NOT_STARTED;
     }
 
-    public TaskGroup(Long id, String name, TaskGroupType type, TaskGroupStatus status) {
+    TaskGroup(Long id, String name, TaskGroupStatus status) {
         this.id = id;
         this.name = name;
-        this.type = type;
         this.status = status;
     }
 
@@ -37,10 +35,6 @@ class TaskGroup {
         return name;
     }
 
-    public TaskGroupType getType() {
-        return type;
-    }
-
     public TaskGroupStatus getStatus() {
         return status;
     }
@@ -49,9 +43,21 @@ class TaskGroup {
         return Collections.unmodifiableList(taskList);
     }
 
-    public void addTask(String name, String description, Double estimation) {
-        InnerTask newTask = new InnerTask(name, description, estimation);
-        taskList.add(newTask);
+    public Either<Exception, Boolean> addTask(String name, String description, Double estimation) {
+        return validateEstimation(estimation)
+            .map(_ -> {
+                InnerTask newTask = new InnerTask(name, description, estimation);
+                taskList.add(newTask);
+                return true;
+            });
+    }
+
+    private Either<Exception, Double> validateEstimation(Double estimation) {
+        if (estimation != null && estimation <= 0) {
+            return Either.left(new IllegalArgumentException("Estimation must be greater than 0"));
+        }
+        // WARNING returning 0.0 because cannot return null, anyway this value is ignored
+        return Either.right(0.0);
     }
 
     public void addTask(Long id, String name, String description, Double estimation) {

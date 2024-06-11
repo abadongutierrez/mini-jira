@@ -14,4 +14,7 @@ interface TaskGroupDomainRepository {
 
     Long saveNewIteration(Iteration iteration);
 
+    Optional<TaskGroup> findByName(String name);
+
+    boolean existsTaskByName(String name);
 }
