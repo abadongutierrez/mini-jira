@@ -18,10 +18,11 @@ import Typography from '@mui/material/Typography';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import * as React from 'react';
 import { Link, Route, Switch } from 'wouter';
-import NewTaskGroup from './task-groups/components/NewTaskGroup';
-import TaskGroupDetails from './task-groups/components/TaskGroupDetails';
-import TaskGroups from './task-groups/components/TaskGroups';
+import NewTaskGroupView from './task-groups/view/components/NewTaskGroup';
+import TaskGroupDetails from './task-groups/view/components/TaskGroupDetails';
+import TaskGroupsView from './task-groups/view/components/TaskGroups';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import TaskGroupsPageController from './task-groups/controller/TaskGroupsPageController';
 
 function Copyright(props: any) {
   return (
@@ -42,25 +43,33 @@ interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
 }
 
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
+const config = { shouldForwardProp: (prop: string) => prop !== 'open' };
+
+const AppBar = styled(
+  MuiAppBar,
+  config
+)<AppBarProps>(
+  ({ theme, open }) => ({
+    zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
+      duration: theme.transitions.duration.leavingScreen,
     }),
-  }),
-}));
+    ...(open && {
+      marginLeft: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+      transition: theme.transitions.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    }),
+  })
+);
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+const Drawer = styled(
+  MuiDrawer,
+  config
+)(
   ({ theme, open }) => ({
     '& .MuiDrawer-paper': {
       position: 'relative',
@@ -176,21 +185,8 @@ export default function App() {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Switch>
-                  <Route path="/task-groups/:id">
-                    {(params) => params.id === 'new' ? <NewTaskGroup /> : <TaskGroupDetails id={params.id} />}
-                  </Route>
-                  <Route path="/task-groups">
-                    <Toolbar>
-                      <Button
-                        component={Link}
-                        href="/task-groups/new"
-                        variant="contained"
-                        color="primary"
-                      >
-                        New Task Group
-                      </Button>
-                    </Toolbar>
-                    <TaskGroups />
+                  <Route path="/task-groups" nest>
+                    <TaskGroupsPageController />
                   </Route>
                   <Route path="/">
                     Home

@@ -26,9 +26,9 @@ public class MiniJiraAppService {
         this.taskGroupFactory = taskGroupFactory;
     }
 
-    public Either<RuntimeException, Long> createTaskGroup(NewTaskGroupRequest request) {
+    public Try<Long> createTaskGroup(NewTaskGroupRequest request) {
         return taskGroupFactory.createTaskGroup(request)
-                .flatMap(newTaskGroup -> Either.of(() -> taskGroupDomainRepository.save(newTaskGroup)));
+                .flatMap(newTaskGroup -> Try.of(() -> taskGroupDomainRepository.save(newTaskGroup)));
     }
 
     /*

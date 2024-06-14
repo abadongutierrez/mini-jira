@@ -1,12 +1,13 @@
-import { useQuery } from 'react-query';
-import { getTaskGroup } from '../fetch';
+
+import { useQuery } from '@tanstack/react-query';
+import { getTaskGroup } from '../../fetch';
 
 interface TaskGroupDetailsProps {
   id: string;
 }
 
 const TaskGroupDetails: React.FC<TaskGroupDetailsProps> = ({ id }) => {
-  const { data: taskList, isLoading, isError } = useQuery(['taskList', id], () => getTaskGroup(id));
+  const { data: taskList, isLoading, isError } = useQuery({ queryKey: ['taskList', id], queryFn: () => getTaskGroup(id) });
 
   if (isLoading) {
     return <div>Loading...</div>;

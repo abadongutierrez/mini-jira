@@ -48,12 +48,8 @@ class MiniJiraResourceController {
 
     @PostMapping("/task-groups")
     public ResponseEntity<String> createTaskList(@RequestBody NewTaskGroupRequest taskListRequest) {
-        Either<RuntimeException, Long> taskGroup = taskListAppService.createTaskGroup(taskListRequest);
-        // TODO improve this
-        Long newId = Try.of(() -> {
-            if (taskGroup.isRight()) return taskGroup.right();
-            else throw taskGroup.left();
-        }).orElseThrow();
+        Try<Long> taskGroupId = taskListAppService.createTaskGroup(taskListRequest);
+        Long newId = taskGroupId.orElseThrow();
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .header("Location", "/task-groups/" + newId)
@@ -108,8 +104,8 @@ class MiniJiraResourceController {
     public ResponseEntity<String> handleException(Exception e) {
         logger.error("Error processing request", e);
         return switch (e) {
-            case IllegalArgumentException _ -> ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            case NotFoundException _ -> ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            case IllegalArgumentException _ -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(formatExceptionToJson(e));
+            case NotFoundException _ -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(formatExceptionToJson(e));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(formatExceptionToJson(e));
         };
     }
