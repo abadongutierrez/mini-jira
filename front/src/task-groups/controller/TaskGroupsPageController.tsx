@@ -15,7 +15,7 @@ const RenderTaskGroups = () => {
         useQuery({
             queryKey: ['tasksInGroup', `${taskGroupId}`],
             queryFn: () => getTasksInTaskGroup(taskGroupId),
-            enabled: false
+            enabled: false // don't fetch by default only when refetch() is called
         });
 
     return (
