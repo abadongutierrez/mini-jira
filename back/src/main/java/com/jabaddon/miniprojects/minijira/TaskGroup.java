@@ -4,8 +4,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.typemeta.funcj.control.Either;
+import org.typemeta.funcj.control.Try;
+
+import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
 
 import lombok.Getter;
 
@@ -15,6 +19,8 @@ class TaskGroup {
     private final String name;
     private final TaskGroupStatus status;
     private final List<Task> taskList = new ArrayList<>();
+    private final List<Task> taskToDelete = new ArrayList<>();
+    private final List<Task> taskToEdit = new ArrayList<>();
 
     TaskGroup(String name) {
         this.name = name;
@@ -43,7 +49,21 @@ class TaskGroup {
         return Collections.unmodifiableList(taskList);
     }
 
-    public Either<Exception, Boolean> addTask(String name, String description, Double estimation) {
+    public List<Task> getTaskToDelete() {
+        return Collections.unmodifiableList(taskToDelete);
+    }
+
+    public List<Task> getTasksToEdit() {
+        return Collections.unmodifiableList(taskToEdit);
+    }
+
+    public Double totalEstimation() {
+        return taskList.stream()
+            .map((t) -> Optional.ofNullable(t.getEstimation()).orElse(0.0))
+            .reduce(0.0, Double::sum);
+    }
+
+    public Try<Boolean> addTask(String name, String description, Double estimation) {
         return validateEstimation(estimation)
             .map(_ -> {
                 InnerTask newTask = new InnerTask(name, description, estimation);
@@ -52,12 +72,45 @@ class TaskGroup {
             });
     }
 
-    private Either<Exception, Double> validateEstimation(Double estimation) {
+    public Try<Boolean> deleteTask(Long taskId) {
+        return Try.of(() -> {
+            Task task = taskList.stream().filter(t -> t.getId().equals(taskId)).findFirst()
+                .orElseThrow(() -> new NotFoundException("Task not found"));
+            taskList.remove(task);
+            taskToDelete.add(task);
+            return true;
+        });
+    }
+
+    public Try<Boolean> editTask(Long taskId, String name, String description, Double estimation) {
+        return validateEstimation(estimation)
+            .map(_ -> {
+                Task task = taskList.stream().filter(t -> t.getId().equals(taskId)).findFirst()
+                    .orElseThrow(() -> new NotFoundException("Task not found"));
+                InnerTask innerTask = (InnerTask) task;
+                // is this a good idea?
+                innerTask.name = name;
+                innerTask.description = description;
+                innerTask.estimation = estimation;
+                taskToEdit.add(task);
+                return true;
+            });
+    }
+
+    public void resetTaskToDelete() {
+        taskToDelete.clear();
+    }
+
+    public void resetTaskToEdit() {
+        taskToDelete.clear();
+    }
+
+    private Try<Double> validateEstimation(Double estimation) {
         if (estimation != null && estimation <= 0) {
-            return Either.left(new IllegalArgumentException("Estimation must be greater than 0"));
+            return Try.failure(new IllegalArgumentException("Estimation must be greater than 0"));
         }
         // WARNING returning 0.0 because cannot return null, anyway this value is ignored
-        return Either.right(0.0);
+        return Try.success(0.0);
     }
 
     public void addTask(Long id, String name, String description, Double estimation) {
@@ -74,9 +127,9 @@ class TaskGroup {
     @Getter
     private class InnerTask implements Task {
         private Long id;
-        private final String name;
-        private final String description;
-        private final Double estimation;
+        private String name;
+        private String description;
+        private Double estimation;
     
         private InnerTask(String name, String description, Double estimation) {
             this.name = name;
@@ -130,6 +183,4 @@ class TaskGroup {
             this.estimation = estimation;
         }
     }
-
-    
 }

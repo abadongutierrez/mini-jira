@@ -6,8 +6,8 @@ import { UseMutationResult } from '@tanstack/react-query';
 
 interface NewTaskInTaskGroupViewProps {
     // TODO find a way to decouple this component from useQuery mutations
-    mutation: UseMutationResult<void, Error, { taskGroupId: string, task: Task }, unknown>;
-    taskGroupId: string;
+    mutation: UseMutationResult<void, Error, { taskGroupId: number, task: Task }, unknown>;
+    taskGroupId: number;
 };
 
 const NewTaskInTaskGroupView: React.FC<NewTaskInTaskGroupViewProps> = ({ mutation, taskGroupId }) => {

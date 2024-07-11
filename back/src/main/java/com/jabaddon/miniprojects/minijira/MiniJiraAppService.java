@@ -3,6 +3,7 @@ package com.jabaddon.miniprojects.minijira;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
 import org.typemeta.funcj.control.Either;
@@ -51,10 +52,11 @@ public class MiniJiraAppService {
     }
 
     private TaskGroupResponse mapToTaskListResponse(TaskGroup taskList) {
-        return new TaskGroupResponse(taskList.getId(), taskList.getName(), taskList.getStatus().name());
+        long totalEstimation = taskList.totalEstimation().longValue();
+        return new TaskGroupResponse(taskList.getId(), taskList.getName(), taskList.getStatus().name(), totalEstimation);
     }
 
-    public Either<Exception, Long> addTask(NewTaskRequest taskCreationRequest) {
+    public Try<Long> addTask(NewTaskRequest taskCreationRequest) {
         Optional<TaskGroup> groupById = taskGroupDomainRepository.findById(taskCreationRequest.taskGroupId());
         if (groupById.isPresent()) {
             TaskGroup taskGroup = groupById.get();
@@ -64,12 +66,12 @@ public class MiniJiraAppService {
                             taskCreationRequest.name(),
                             taskCreationRequest.description(),
                             taskCreationRequest.estimation()))
-                    .flatMap(_ -> Either.of(() -> {
+                    .flatMap(_ -> Try.of(() -> {
                         taskGroupDomainRepository.saveNewTasks(taskGroup);
                         return taskGroup.getId();
                     }));
         } else {
-            return Either.left(new NotFoundException("Task Group not found"));
+            return Try.failure(new NotFoundException("Task Group not found"));
         }
     }
 
@@ -81,10 +83,45 @@ public class MiniJiraAppService {
                     }
                     TaskGroup tp = taskGroup.get();
                     TasksInGroupResponse response = new TasksInGroupResponse(
-                        tp.getTasks().stream()
-                            .map(t -> new TaskResponse(t.getId(), t.getName(), t.getDescription())).toList());
+                        tp.getTasks().stream().map(this::mapTaskToTaskResponse).toList());
                     return Try.success(response);
                 });
+    }
+
+    public Try<TaskResponse> getTaskById(Long groupId, Long taskId) {
+        return Try.of(() -> {
+            TaskGroup taskGroup = taskGroupDomainRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Task Group not found"));
+            Task task = taskGroup.getTasks().stream().filter(t -> t.getId().equals(taskId))
+                .findFirst().orElseThrow(() -> new NotFoundException("Task not found"));
+            return mapTaskToTaskResponse(task);
+        });
+    }
+
+    public Try<Boolean> deleteTaskInGroup(Long groupId, Long taskId) {
+        return Try.of(() -> {
+            Optional<TaskGroup> taskGroup = taskGroupDomainRepository.findById(groupId);
+            taskGroup.ifPresent(tp -> tp.deleteTask(taskId).orElseThrow());
+            taskGroupDomainRepository.deleteTasks(taskGroup.get());
+            return true;
+        });
+    }
+
+    public Try<TaskResponse> editTaskInGroup(Long groupId, Long taskId, NewTaskRequest request) {
+        return Try.of(() -> {
+            TaskGroup taskGroup = taskGroupDomainRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Task Group not found"));
+            taskGroupFactory.validateUniqueTaskName(request.name()).orElseThrow();
+            taskGroup.editTask(taskId, request.name(), request.description(), request.estimation()).orElseThrow();
+            taskGroupDomainRepository.saveEditedTasks(taskGroup);
+            return taskGroupDomainRepository.findById(groupId).get().getTasks()
+                .stream().filter(t -> t.getId().equals(taskId)).findFirst().map(this::mapTaskToTaskResponse).get();
+        });
+    }
+
+    private TaskResponse mapTaskToTaskResponse(Task t) {
+        int estimationAsInt = t.getEstimation() != null ? t.getEstimation().intValue() : 0;
+        return new TaskResponse(t.getId(), t.getName(), t.getDescription(), estimationAsInt);
     }
 
     public Long startIteration(Long groupId, LocalDateTime now, LocalDateTime plusDays) {

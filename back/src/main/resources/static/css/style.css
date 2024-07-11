@@ -1,0 +1,58 @@
+/* Custom Stylesheet */
+/**
+ * Use this file to override Materialize files so you can update
+ * the core Materialize files in the future
+ *
+ * Made By MaterializeCSS.com
+ */
+
+.icon-block {
+  padding: 0 15px;
+}
+.icon-block .material-icons {
+	font-size: inherit;
+}
+
+.sidenav {
+  width: 200px;
+}
+
+header, main, footer {
+  padding-left: 200px;
+}
+
+@media only screen and (max-width : 992px) {
+  header, main, footer {
+    padding-left: 0;
+  }
+}
+
+.task-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.task-info {
+  display: flex;
+  flex-direction: row;
+  width: 60%;
+  flex-wrap: wrap;
+  gap: 2%;
+}
+
+.task-actions {
+  display: flex;
+  flex-direction: row;
+  width: 40%;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.task-info .flex-0 {
+  flex-grow: 0;
+}
+s
+.task-info .flex-1 {
+  flex-grow: 1;
+}

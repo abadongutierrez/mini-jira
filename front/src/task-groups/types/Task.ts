@@ -1,6 +1,10 @@
-export interface Task {
-    id: number;
+export interface TaskNoId {
     name: string;
     description: string;
-    estimation: number;
+    estimation?: number;
+}
+
+
+export interface Task extends TaskNoId {
+    id: number;
 }

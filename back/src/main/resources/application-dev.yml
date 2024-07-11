@@ -8,6 +8,8 @@ spring:
 
 logging:
   level:
+      com:
+        jabaddon: DEBUG
       org:
         hibernate:
           SQL: DEBUG

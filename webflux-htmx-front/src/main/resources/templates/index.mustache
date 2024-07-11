@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Web Page</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <div>{{name}}</div>
+    <button hx-post="/render-name"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Name
+    </button>
+    <button hx-post="/render-form"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Form
+    </button>
+    <button hx-post="/render-image"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Image
+    </button>
+    <button id="render-table-button" hx-post="/render-table"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Table
+    </button>
+    <button hx-get="/error"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Error
+    </button>
+    <button hx-get="/render-trigger"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Trigger
+    </button>
+    <div id="indicator" class="htmx-indicator">Loading...</div>
+    <div id="name-div"></div>
+
+    
+    <script>
+        window.addEventListener("load", (event) => {
+            console.log("page is fully loaded");
+            document.body.addEventListener('htmx:beforeRequest', function (event) {
+                console.log('htmx:beforeRequest', event.detail);
+                let loadingString = 'Loading...';
+                if (event.target.id === 'render-table-button') {
+                    loadingString = 'Loading Table...';
+                }
+                event.detail.target.innerHTML = loadingString;
+            });
+
+            document.body.addEventListener('htmx:afterRequest', function (event) {
+                console.log('htmx:afterRequest', event.detail);
+            });
+
+            document.body.addEventListener('htmx:beforeSwap', function(evt) {
+                console.log('htmx:beforeSwap', evt.detail);
+                if (evt.detail.xhr.status === 500) {
+                    evt.detail.target.innerHTML = 'An error occurred.';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

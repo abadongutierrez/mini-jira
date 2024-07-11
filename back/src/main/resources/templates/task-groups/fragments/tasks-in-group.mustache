@@ -1,0 +1,49 @@
+<div>
+    {{#tasks?}}
+    <ul class="collection">
+    {{#tasks}}
+        <li class="collection-item">
+            <div class="task-row">
+                <div class="task-info">
+                    <div class="flex-0"><i class="material-icons">assignment</i></div>
+                    <div class="flex-0">{{id}}</div>
+                    <div class="flex-1">{{name}}</div>
+                    <div class="flex-1">{{description}}</div>
+                </div>
+                <div class="task-actions">
+                    <span class="grey lighten-3 badge">{{estimation}}</span>
+                    <a href="#!" class="secondary-content">
+                        <i class="material-icons dropdown-trigger"
+                            data-target='dropdown-tg-id-{{taskGroupId}}-taskId-{{id}}'
+                        >delete</i>
+                    </a>
+                    <!-- Dropdown Structure -->
+                    <ul id='dropdown-tg-id-{{taskGroupId}}-taskId-{{id}}' class='dropdown-content'>
+                        <li hx-delete="/fragments/task-groups/{{taskGroupId}}/tasks/{{id}}"
+                            hx-trigger="click"
+                            hx-swap="innerHTML"
+                            hx-target="closest .content"><a href="#!">Yes</a></li>
+                    </ul>
+                </div>
+            </div>
+        </li>
+    {{/tasks}}
+    </ul>   
+    {{/tasks?}}
+
+    {{^tasks?}}
+    <p>No tasks in this group</p>
+    {{/tasks?}}
+</div>
+
+<!--
+hx-delete="/fragments/task-groups/{{taskGroupId}}/tasks/{{id}}"
+                            hx-trigger="click"
+                            hx-swap="innerHTML"
+                            hx-target="closest .content"
+-->
+
+<script>
+    var dropdownTriggerElems = document.querySelectorAll('.task-group.id-{{taskGroupId}} .dropdown-trigger');
+    var dropdownInstances = M.Dropdown.init(dropdownTriggerElems, {});
+</script>

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.typemeta.funcj.control.Either;
+import org.typemeta.funcj.control.Try;
 
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskRequest;
@@ -50,9 +52,9 @@ public class FeaturesTest {
 
     @Test
     void taskGroupNameShouldIncludeName() {
-        Either<Exception, Long> taskGroup = appService.createTaskGroup(new NewTaskGroupRequest(" "));
-        assertThat(taskGroup.isLeft()).isTrue();
-        assertThat(taskGroup.left()).isInstanceOf(IllegalArgumentException.class);
+        Try<Long> taskGroup = appService.createTaskGroup(new NewTaskGroupRequest(" "));
+        assertThat(taskGroup.isSuccess()).isFalse();
+        assertThrows(IllegalArgumentException.class, () -> taskGroup.orElseThrow());
     }
 
     @Test
@@ -60,10 +62,10 @@ public class FeaturesTest {
         int number = getRandomNumber();
         String name = "Task Group " + number;
         appService.createTaskGroup(new NewTaskGroupRequest(name));
-        Either<Exception, Long> taskGroup =
+        Try<Long> taskGroup =
             appService.createTaskGroup(new NewTaskGroupRequest(name));
-        assertThat(taskGroup.isLeft()).isTrue();
-        assertThat(taskGroup.left()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(taskGroup.isSuccess()).isFalse();
+        assertThrows(IllegalArgumentException.class, () -> taskGroup.orElseThrow());
     }
 
     private int getRandomNumber() {
@@ -74,20 +76,20 @@ public class FeaturesTest {
 
     @Test
     void createTaskWithRepeatedName() {
-        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + getRandomNumber())).right();
+        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + getRandomNumber())).orElseThrow();
 
         int taskNumber = getRandomNumber();
-        Either<Exception, Long> firstTask = appService.addTask(new NewTaskRequest("Task " + taskNumber, "Task 1 description", null, id));
-        assertThat(firstTask.isRight()).isTrue();
+        Try<Long> firstTask = appService.addTask(new NewTaskRequest("Task " + taskNumber, "Task 1 description", null, id));
+        assertThat(firstTask.isSuccess()).isTrue();
 
-        Either<Exception, Long> secondTask = appService.addTask(new NewTaskRequest("Task " + taskNumber, "Task 2 description", 1.0, id));
-        assertThat(secondTask.isLeft()).isTrue();
-        assertThat(secondTask.left()).isInstanceOf(IllegalArgumentException.class);
+        Try<Long> secondTask = appService.addTask(new NewTaskRequest("Task " + taskNumber, "Task 2 description", 1.0, id));
+        assertThat(secondTask.isSuccess()).isFalse();
+        assertThrows(IllegalArgumentException.class, () -> secondTask.orElseThrow());
     }
     
     @Test
     void createTaskGroup() {
-        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + getRandomNumber())).right();
+        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + getRandomNumber())).orElseThrow();
 
         assertThat(id).isNotNull();
         assertThat(id).isGreaterThan(0);
@@ -99,23 +101,23 @@ public class FeaturesTest {
         Map<String, Object> map = jdbcTemplate.queryForMap("select count(*) as count from tasks where task_group_id = ?", new Object[]{ id });
         assertThat(map.get("count")).isEqualTo(3L);
 
-        TasksInGroupResponse tasks = appService.getTasksInGroup(id).right();
+        TasksInGroupResponse tasks = appService.getTasksInGroup(id).orElseThrow();
 
         assertThat(tasks.tasks()).size().isEqualTo(3);
     }
 
     @Test
     void createTaskInNotExistingTaskGroup() {
-        Either<Exception, Long> result =
+        Try<Long> result =
             appService.addTask(new NewTaskRequest("Task 1", "Task 1 description", null, 1000L));
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.left()).isInstanceOf(NotFoundException.class);
+        assertThat(result.isSuccess()).isFalse();
+        assertThrows(NotFoundException.class, () -> result.orElseThrow());
     }
 
 
     @Test
     void startAnIteration() {
-        Long groupId = appService.createTaskGroup(new NewTaskGroupRequest("Sprint 1")).right();
+        Long groupId = appService.createTaskGroup(new NewTaskGroupRequest("Sprint 1")).orElseThrow();
         appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 1 description", 3.0, groupId));
         appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 2 description", 1.0, groupId));
         appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 3 description", 2.5, groupId));

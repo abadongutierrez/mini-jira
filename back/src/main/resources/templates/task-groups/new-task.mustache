@@ -1,0 +1,50 @@
+{{> layout/header}}
+<div class="row">
+
+    {{#error?}}
+    <div class="col s12">
+        <div class="card-panel red lighten-4">
+            <span class="red-text text-darken-4">{{error}}</span>
+        </div>
+    </div>
+    {{/error?}}
+
+    <form class="col s12" action="/task-groups/{{taskGroup.id}}/tasks" method="post">
+        <div class="row">
+            <div class="input-field col s12">
+            <input id="groupId" name="groupId" type="text" class="validate" disabled value="{{taskGroup.id}} - {{taskGroup.name}}">
+            <label for="name">Task Group</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+            <input placeholder="Name" id="name" name="name" type="text" class="validate {{#error?}}invalid{{/error?}}">
+            <label for="name">Name</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+            <input placeholder="Description" id="description" name="description" type="text" class="validate {{#error?}}invalid{{/error?}}">
+            <label for="name">Description</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+            <input placeholder="Estimation" id="estimation" name="estimation" type="text" class="validate {{#error?}}invalid{{/error?}}">
+            <label for="name">Estimation</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                <button class="btn waves-effect waves-light" type="submit">Submit
+                    <i class="material-icons right">send</i>
+                </button>
+                <a class="btn waves-effect waves-light" href="/task-groups">Cancel
+                    <i class="material-icons right">cancel</i>
+                </a>
+            </div>
+        </div>
+    </form>
+  </div>
+
+{{> layout/footer}}

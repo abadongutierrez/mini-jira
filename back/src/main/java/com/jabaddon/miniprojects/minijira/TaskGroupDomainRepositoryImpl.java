@@ -66,6 +66,16 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
         return taskJpaEntity;
     }
 
+    private TaskJpaEntity mapTaskToEditTaskJpaEntity(Long groupId, Task t) {
+        TaskJpaEntity taskJpaEntity = new TaskJpaEntity();
+        taskJpaEntity.id = t.getId();
+        taskJpaEntity.name = t.getName();
+        taskJpaEntity.description = t.getDescription();
+        taskJpaEntity.estimation = t.getEstimation();
+        taskJpaEntity.taskGroupId = groupId;
+        return taskJpaEntity;
+    }
+
     private TaskGroup mapToDomainEntity(TaskGroupJpaEntity taskListJpaEntity) {
         TaskGroup tg = new TaskGroup(
                 taskListJpaEntity.id,
@@ -94,8 +104,20 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
 
     @Override
     public boolean existsTaskByName(String name) {
-        return taskJpaRepository.findByName(name).isPresent();
+        return !taskJpaRepository.findByName(name).isEmpty();
     }
 
-    
+    @Override
+    public void deleteTasks(TaskGroup taskGroup) {
+        List<Long> ids = taskGroup.getTaskToDelete().stream().map(Task::getId).toList();
+        taskJpaRepository.deleteAllById(ids);
+        taskGroup.resetTaskToDelete();
+    }
+
+    @Override
+    public void saveEditedTasks(TaskGroup taskGroup) {
+        List<Task> tasks = taskGroup.getTasksToEdit();
+        List<TaskJpaEntity> editedTasks = tasks.stream().map(t -> mapTaskToEditTaskJpaEntity(taskGroup.getId(), t)).toList();
+        taskJpaRepository.saveAll(editedTasks);
+    }
 }

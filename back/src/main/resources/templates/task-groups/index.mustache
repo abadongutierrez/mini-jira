@@ -1,0 +1,53 @@
+{{> layout/header}}
+
+<a class="waves-effect waves-light btn"
+    href="/task-groups/new">
+    New Task Group
+</a>
+<ul class="collapsible expandable">
+    {{#taskGroups}}
+    <li class="task-group id-{{taskGroup.id}}">
+      <div class="collapsible-header"
+        hx-get="/fragments/task-groups/{{taskGroup.id}}/tasks"
+        hx-trigger="click[!document.querySelector('.task-group.id-{{taskGroup.id}}.active')]"
+        hx-target="next .collapsible-body .content"
+        hx-swap="innertHTML"
+        placeholder="Search...">
+        <i class="material-icons">filter_drama</i>
+        {{taskGroup.name}}
+        <span class="grey lighten-3 badge right"
+          hx-get="/fragments/task-groups/{{taskGroup.id}}/total-estimation"
+          hx-trigger="update-total-estimation-id-{{taskGroup.id}} from:body"
+          hx-target="this"
+          hx-swap="innerHTML"
+          >{{taskGroup.totalEstimation}}</span>
+        </div>
+      <div class="collapsible-body">
+        <div class="content"
+          hx-get="/fragments/task-groups/{{taskGroup.id}}/tasks"
+          hx-trigger="reload-tasks-id-{{taskGroup.id}} from:body"
+          hx-target="this"
+          hx-swap="innerHTML"
+          ></div>
+        <div class="row">
+          <div class="col s12">
+              <a class="btn waves-effect waves-light right" href="/task-groups/{{taskGroup.id}}/tasks/new">New Task
+                  <i class="material-icons right">add</i>
+              </a>
+          </div>
+        </div>
+      </div>
+    </li>
+    {{/taskGroups}}
+</ul>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      var elem = document.querySelector('.collapsible.expandable');
+      var instance = M.Collapsible.init(elem, {
+          accordion: false
+      });
+  });
+</script>
+
+{{> layout/footer}}

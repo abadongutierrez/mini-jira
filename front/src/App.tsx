@@ -18,9 +18,9 @@ import Typography from '@mui/material/Typography';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import * as React from 'react';
 import { Link, Route, Switch } from 'wouter';
-import NewTaskGroupView from './task-groups/view/components/NewTaskGroup';
+import NewTaskGroupView from './task-groups/view/components/NewTaskGroupView';
 import TaskGroupDetails from './task-groups/view/components/TaskGroupDetails';
-import TaskGroupsView from './task-groups/view/components/TaskGroups';
+import TaskGroupsView from './task-groups/view/components/TaskGroupView';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import TaskGroupsPageController from './task-groups/controller/TaskGroupsPageController';
 

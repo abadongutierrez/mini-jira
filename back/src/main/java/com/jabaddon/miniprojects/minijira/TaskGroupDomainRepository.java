@@ -17,4 +17,8 @@ interface TaskGroupDomainRepository {
     Optional<TaskGroup> findByName(String name);
 
     boolean existsTaskByName(String name);
+
+    void deleteTasks(TaskGroup taskGroup);
+
+    void saveEditedTasks(TaskGroup taskGroup);
 }

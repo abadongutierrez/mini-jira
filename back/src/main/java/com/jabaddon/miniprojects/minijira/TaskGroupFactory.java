@@ -39,11 +39,11 @@ class TaskGroupFactory {
         return Try.success(request);
     }
 
-    public Either<Exception, String> validateUniqueTaskName(String name) {
+    public Try<String> validateUniqueTaskName(String name) {
         boolean findByName = taskGroupRepository.existsTaskByName(name);
         if (findByName) {
-            return Either.left(new IllegalArgumentException("Task name already exists"));
+            return Try.failure(new IllegalArgumentException("Task name already exists"));
         }
-        return Either.right(name);
+        return Try.success(name);
     }
 }

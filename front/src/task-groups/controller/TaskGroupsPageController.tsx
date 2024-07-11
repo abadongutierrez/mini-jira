@@ -1,22 +1,19 @@
 import { Button, Toolbar } from "@mui/material";
-import TaskGroupsView from "../view/components/TaskGroups";
+import TaskGroupsView from "../view/components/TaskGroupView";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { createTaskGroup, createTaskInTaskGroup, getAllTaskGroups, getTasksInTaskGroup } from "../fetch";
-import NewTaskGroupView from "../view/components/NewTaskGroup";
+import NewTaskGroupView from "../view/components/NewTaskGroupView";
 import TaskGroupDetails from "../view/components/TaskGroupDetails";
 import { TaskGroup } from "../types/TaskGroup";
 import { Task } from "../types/Task";
-import NewTaskInTaskGroupView from "../view/components/NewTaskInTaskGroup";
+import NewTaskInTaskGroupView from "../view/components/NewTaskInTaskGroupView";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useAllTaskGroupsQueryResult, useGetTaskGroupQueryResult, useNewTaskGroupMutation, useTasksByTaskGroupQueryResult } from "../hooks";
+import EditTaskInTaskGroupView from "../view/components/EditTaskInTaskGroupView";
 
 const RenderTaskGroups = () => {
-    const { data: taskLists, isLoading, isError } = useQuery({ queryKey: ['taskGroups'], queryFn: getAllTaskGroups });
-    const createTaskQuery = (taskGroupId: number) => 
-        useQuery({
-            queryKey: ['tasksInGroup', `${taskGroupId}`],
-            queryFn: () => getTasksInTaskGroup(taskGroupId),
-            enabled: false // don't fetch by default only when refetch() is called
-        });
+    const allTaskGroupsQr = useAllTaskGroupsQueryResult();
+    const tasksByTaskGroupQrFactory = (taskGroup: TaskGroup) => useTasksByTaskGroupQueryResult(taskGroup)
 
     return (
         <>
@@ -30,39 +27,48 @@ const RenderTaskGroups = () => {
                     New Task Group
                 </Button>
             </Toolbar>
-            {isLoading && <div>Loading...</div>}
-            {isError && <div>Error fetching task groups</div>}
-            {!taskLists && <div>No task groups found</div>}
-            {taskLists && <TaskGroupsView taskLists={taskLists} createTaskQuery={createTaskQuery} />}
+            {allTaskGroupsQr.isLoading ? (
+                <div>Loading...</div>
+            ) : allTaskGroupsQr.isError ? (
+                <div>Error fetching task groups</div>
+            ) : !allTaskGroupsQr.isData ? (
+                <div>No task groups found</div>
+            ) : (
+                <TaskGroupsView taskLists={allTaskGroupsQr.data} createTaskQuery={tasksByTaskGroupQrFactory} />
+            )}
         </>
     );
 }
 
 const RenderNewTaskGroup = () => {
-    const [_, setLocation] = useLocation();
-    const mutation = useMutation<void, Error, TaskGroup>({
-        mutationFn: createTaskGroup,
-        onSuccess: () => {
-            setLocation("/");
-        }
-    });
+    const mutation = useNewTaskGroupMutation();
 
     return (
         <NewTaskGroupView mutation={mutation} />
     );
 }
 
-const RenderNewTaskInTaskGroup = ({ taskGroupId }: { taskGroupId: string }) => {
+const RenderNewTaskInTaskGroup = ({ taskGroupId }: { taskGroupId: number }) => {
     const [_, setLocation] = useLocation();
-    const mutation = useMutation<void, Error, { taskGroupId: string, task: Task}>({
+    const getTaskGroupQueryResult = useGetTaskGroupQueryResult(taskGroupId);
+    const mutation = useMutation<void, Error, { taskGroupId: number, task: Task }>({
         mutationFn: createTaskInTaskGroup,
         onSuccess: () => {
+            getTaskGroupQueryResult.refetch ? getTaskGroupQueryResult.refetch() : null;
             setLocation("/");
         }
     });
 
     return (
         <NewTaskInTaskGroupView mutation={mutation} taskGroupId={taskGroupId} />
+    );
+}
+
+const RenderEditTaskInTaskGroup = ({ taskGroupId, taskId }: { taskGroupId: number, taskId: number }) => {
+    const [_, setLocation] = useLocation();
+
+    return (
+        <EditTaskInTaskGroupView taskGroupId={taskGroupId} taskId={taskId} />
     );
 }
 
@@ -77,7 +83,10 @@ const TaskGroupPageController = () => {
                     {({ id }) => <TaskGroupDetails id={id} />}
                 </Route>
                 <Route path="/:id/tasks/new">
-                    {({ id }) => <RenderNewTaskInTaskGroup taskGroupId={id} />}
+                    {({ id }) => <RenderNewTaskInTaskGroup taskGroupId={parseInt(id)} />}
+                </Route>
+                <Route path="/:groupId/tasks/:id/edit">
+                    {({ groupId, id }) => <RenderEditTaskInTaskGroup taskGroupId={parseInt(groupId)} taskId={parseInt(id)} />}
                 </Route>
                 <Route path="/">
                     <RenderTaskGroups />
