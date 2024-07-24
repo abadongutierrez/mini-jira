@@ -1,27 +1,32 @@
 package com.jabaddon.miniprojects.minijira.infrastructure.web;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import java.util.Optional;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import com.jabaddon.miniprojects.minijira.MiniJiraAppService;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskRequest;
 import com.jabaddon.miniprojects.minijira.dto.TaskGroupResponse;
+import com.jabaddon.miniprojects.minijira.dto.TaskResponse;
+import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
+import com.jabaddon.miniprojects.minijira.tasks.TasksAppService;
 
 @Controller
 public class PageController {
-    private final MiniJiraAppService taskListAppService;
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(PageController.class);
 
-    public PageController(MiniJiraAppService taskListAppService) {
+
+    private final TasksAppService taskListAppService;
+
+    public PageController(TasksAppService taskListAppService) {
         this.taskListAppService = taskListAppService;
     }
 
@@ -67,6 +72,22 @@ public class PageController {
         }
     }
 
+    @PostMapping("/task-groups/{groupId}/tasks/{taskId}")
+    public String updateTask(@PathVariable Long groupId, @PathVariable Long taskId,
+        @ModelAttribute NewTaskWebRequest request, Model model) {
+        try {
+            taskListAppService.editTaskInGroup(groupId, taskId, toNewTaskRequest(request, taskId)).orElseThrow();
+            return "redirect:/task-groups";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error?", true);
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("taskGroup", taskListAppService.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Task Group not found")));
+            model.addAttribute("task", taskListAppService.getTaskById(groupId, taskId).orElseThrow());
+            return "task-groups/edit-task";
+        }
+    }
+
     private NewTaskRequest toNewTaskRequest(NewTaskWebRequest request, Long id) {
         return new NewTaskRequest(request.name(), request.description(), request.estimation(), id);
     }
@@ -84,4 +105,17 @@ public class PageController {
         model.addAttribute("taskGroup", taskList.get());
         return "task-groups/new-task";
     }
+
+    @GetMapping("/task-groups/{groupId}/tasks/{taskId}/edit")
+    public String editTask(@PathVariable Long groupId, @PathVariable Long taskId, Model model) {
+        model.addAttribute("error?", false);
+        model.addAttribute("taskGroup", taskListAppService.findById(groupId)
+            .orElseThrow(() -> new NotFoundException("Task Group not found")));
+        TaskResponse taskResponse = taskListAppService.getTaskById(groupId, taskId).orElseThrow();
+        logger.debug(taskResponse.toString());
+        model.addAttribute("task", taskResponse);
+        return "task-groups/edit-task";
+    }
+
+    // TODO: implement exception handling
 }

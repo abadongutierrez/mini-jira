@@ -1,4 +1,4 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.tasks;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,16 +8,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
+class DomainRepositoryImpl implements DomainRepository {
 
     private final TaskGroupJpaRepository taskGroupJpaRepository;
     private final TaskJpaRepository taskJpaRepository;
-    private final IterationJpaRepository iterationJpaRepository;
 
-    public TaskGroupDomainRepositoryImpl(TaskGroupJpaRepository taskListJpaRepository, TaskJpaRepository taskJpaRepository, com.jabaddon.miniprojects.minijira.IterationJpaRepository iterationJpaRepository) {
+    public DomainRepositoryImpl(TaskGroupJpaRepository taskListJpaRepository, TaskJpaRepository taskJpaRepository) {
         this.taskGroupJpaRepository = taskListJpaRepository;
         this.taskJpaRepository = taskJpaRepository;
-        this.iterationJpaRepository = iterationJpaRepository;
     }
 
     @Override
@@ -87,16 +85,6 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
     }
 
     @Override
-    public Long saveNewIteration(Iteration iteration) {
-        IterationJpaEntity iterationJpaEntity = new IterationJpaEntity();
-        iterationJpaEntity.startAt = iteration.getStartDate();
-        iterationJpaEntity.endAt = iteration.getEndDate();
-        iterationJpaEntity.taskGroupId = iteration.getTaskGroup().getId();
-        IterationJpaEntity newIteration = iterationJpaRepository.save(iterationJpaEntity);
-        return newIteration.id;
-    }
-
-    @Override
     public Optional<TaskGroup> findByName(String name) {
         Optional<TaskGroupJpaEntity> taskListJpaEntity = taskGroupJpaRepository.findByName(name);
         return taskListJpaEntity.map(this::mapToDomainEntity);
@@ -104,7 +92,12 @@ class TaskGroupDomainRepositoryImpl implements TaskGroupDomainRepository {
 
     @Override
     public boolean existsTaskByName(String name) {
-        return !taskJpaRepository.findByName(name).isEmpty();
+        return taskJpaRepository.countByName(name) > 0;
+    }
+
+    @Override
+    public boolean existsTaskByName(String name, Long taskId) {
+        return taskJpaRepository.countByNameAndIdNot(name, taskId) > 0;
     }
 
     @Override

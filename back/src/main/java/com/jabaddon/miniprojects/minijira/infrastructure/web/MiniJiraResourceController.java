@@ -21,18 +21,17 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.typemeta.funcj.control.Either;
 import org.typemeta.funcj.control.Try;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jabaddon.miniprojects.minijira.MiniJiraAppService;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskRequest;
 import com.jabaddon.miniprojects.minijira.dto.TaskGroupResponse;
 import com.jabaddon.miniprojects.minijira.dto.TaskResponse;
 import com.jabaddon.miniprojects.minijira.dto.TasksInGroupResponse;
 import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
+import com.jabaddon.miniprojects.minijira.tasks.TasksAppService;
 
 import jakarta.validation.Valid;
 
@@ -43,10 +42,10 @@ class MiniJiraResourceController {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(MiniJiraResourceController.class);
 
-    private final MiniJiraAppService taskListAppService;
+    private final TasksAppService taskListAppService;
     private final ObjectMapper objectMapper;
 
-    public MiniJiraResourceController(MiniJiraAppService taskListAppService,
+    public MiniJiraResourceController(TasksAppService taskListAppService,
             Jackson2ObjectMapperBuilder mapperBuilder) {
         this.taskListAppService = taskListAppService;
         this.objectMapper = mapperBuilder.build();

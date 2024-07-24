@@ -1,4 +1,4 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.iterations;
 
 import java.time.LocalDateTime;
 
@@ -6,6 +6,6 @@ public interface Iteration {
     Long getId();
     LocalDateTime getStartDate();
     LocalDateTime getEndDate();
-    TaskGroup getTaskGroup();
+    Long getTaskGroup();
     Double totalEstimation();
 }

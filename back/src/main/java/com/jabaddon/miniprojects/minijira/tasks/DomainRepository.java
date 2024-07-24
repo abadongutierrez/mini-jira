@@ -1,9 +1,9 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.tasks;
 
 import java.util.List;
 import java.util.Optional;
 
-interface TaskGroupDomainRepository {
+interface DomainRepository {
     Long save(TaskGroup taskList);
 
     void saveNewTasks(TaskGroup taskList);
@@ -12,11 +12,11 @@ interface TaskGroupDomainRepository {
 
     List<TaskGroup> findAll();
 
-    Long saveNewIteration(Iteration iteration);
-
     Optional<TaskGroup> findByName(String name);
 
     boolean existsTaskByName(String name);
+
+    boolean existsTaskByName(String name, Long taskId);
 
     void deleteTasks(TaskGroup taskGroup);
 

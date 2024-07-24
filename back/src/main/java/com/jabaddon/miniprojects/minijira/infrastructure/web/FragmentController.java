@@ -2,20 +2,18 @@ package com.jabaddon.miniprojects.minijira.infrastructure.web;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.jabaddon.miniprojects.minijira.MiniJiraAppService;
 import com.jabaddon.miniprojects.minijira.dto.TaskGroupResponse;
 import com.jabaddon.miniprojects.minijira.dto.TasksInGroupResponse;
+import com.jabaddon.miniprojects.minijira.tasks.TasksAppService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -23,9 +21,9 @@ import jakarta.servlet.http.HttpServletResponse;
 @RequestMapping("/fragments")
 public class FragmentController {
     
-    private final MiniJiraAppService taskListAppService;
+    private final TasksAppService taskListAppService;
 
-    public FragmentController(MiniJiraAppService taskListAppService) {
+    public FragmentController(TasksAppService taskListAppService) {
         this.taskListAppService = taskListAppService;
     }
 

@@ -1,4 +1,4 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.tasks;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

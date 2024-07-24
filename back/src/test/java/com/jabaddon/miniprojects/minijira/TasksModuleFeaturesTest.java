@@ -1,15 +1,10 @@
 package com.jabaddon.miniprojects.minijira;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,17 +14,20 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.typemeta.funcj.control.Either;
 import org.typemeta.funcj.control.Try;
 
+import com.github.javafaker.Faker;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
 import com.jabaddon.miniprojects.minijira.dto.NewTaskRequest;
 import com.jabaddon.miniprojects.minijira.dto.TasksInGroupResponse;
 import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
+import com.jabaddon.miniprojects.minijira.tasks.TasksAppService;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @Testcontainers
-public class FeaturesTest {
+public class TasksModuleFeaturesTest {
+
+    private Faker faker = new Faker();
 
     @org.testcontainers.junit.jupiter.Container
     public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:16-alpine")
@@ -38,7 +36,7 @@ public class FeaturesTest {
             .withPassword("password");
 
     @Autowired
-    private MiniJiraAppService appService;
+    private TasksAppService appService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -59,7 +57,7 @@ public class FeaturesTest {
 
     @Test
     void taskGroupNameSouldBeUnique() {
-        int number = getRandomNumber();
+        int number = randomNum();
         String name = "Task Group " + number;
         appService.createTaskGroup(new NewTaskGroupRequest(name));
         Try<Long> taskGroup =
@@ -68,17 +66,15 @@ public class FeaturesTest {
         assertThrows(IllegalArgumentException.class, () -> taskGroup.orElseThrow());
     }
 
-    private int getRandomNumber() {
-        Random rand = new Random();
-        int number = rand.nextInt(1000);
-        return number;
+    private int randomNum() {
+        return faker.random().nextInt(1000);
     }
 
     @Test
     void createTaskWithRepeatedName() {
-        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + getRandomNumber())).orElseThrow();
+        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + randomNum())).orElseThrow();
 
-        int taskNumber = getRandomNumber();
+        int taskNumber = randomNum();
         Try<Long> firstTask = appService.addTask(new NewTaskRequest("Task " + taskNumber, "Task 1 description", null, id));
         assertThat(firstTask.isSuccess()).isTrue();
 
@@ -89,14 +85,14 @@ public class FeaturesTest {
     
     @Test
     void createTaskGroup() {
-        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + getRandomNumber())).orElseThrow();
+        Long id = appService.createTaskGroup(new NewTaskGroupRequest("Task Group " + faker.pokemon().name())).orElseThrow();
 
         assertThat(id).isNotNull();
         assertThat(id).isGreaterThan(0);
 
-        appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 1 description", null, id));
-        appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 2 description", 1.0, id));
-        appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 3 description", 2.5, id));
+        appService.addTask(new NewTaskRequest("Task " + randomNum(), "Task 1 description", null, id));
+        appService.addTask(new NewTaskRequest("Task " + randomNum(), "Task 2 description", 1.0, id));
+        appService.addTask(new NewTaskRequest("Task " + randomNum(), "Task 3 description", 2.5, id));
 
         Map<String, Object> map = jdbcTemplate.queryForMap("select count(*) as count from tasks where task_group_id = ?", new Object[]{ id });
         assertThat(map.get("count")).isEqualTo(3L);
@@ -112,21 +108,5 @@ public class FeaturesTest {
             appService.addTask(new NewTaskRequest("Task 1", "Task 1 description", null, 1000L));
         assertThat(result.isSuccess()).isFalse();
         assertThrows(NotFoundException.class, () -> result.orElseThrow());
-    }
-
-
-    @Test
-    void startAnIteration() {
-        Long groupId = appService.createTaskGroup(new NewTaskGroupRequest("Sprint 1")).orElseThrow();
-        appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 1 description", 3.0, groupId));
-        appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 2 description", 1.0, groupId));
-        appService.addTask(new NewTaskRequest("Task " + getRandomNumber(), "Task 3 description", 2.5, groupId));
-
-        Map<String, Object> map = jdbcTemplate.queryForMap("select count(*) as count from tasks where task_group_id = ?", new Object[]{ groupId });
-        assertThat(map.get("count")).isEqualTo(3L);
-
-        Long newIterationId = appService.startIteration(groupId, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        assertThat(newIterationId).isNotNull();
-        assertThat(newIterationId).isGreaterThan(0);
     }
 }

@@ -1,12 +1,9 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.tasks;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
-import org.typemeta.funcj.control.Either;
 import org.typemeta.funcj.control.Try;
 
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
@@ -17,12 +14,12 @@ import com.jabaddon.miniprojects.minijira.dto.TasksInGroupResponse;
 import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
 
 @Service
-public class MiniJiraAppService {
+public class TasksAppService {
 
-    private final TaskGroupDomainRepository taskGroupDomainRepository;
+    private final DomainRepository taskGroupDomainRepository;
     private final TaskGroupFactory taskGroupFactory;
 
-    public MiniJiraAppService(TaskGroupDomainRepository taskListRepository, TaskGroupFactory taskGroupFactory) {
+    public TasksAppService(DomainRepository taskListRepository, TaskGroupFactory taskGroupFactory) {
         this.taskGroupDomainRepository = taskListRepository;
         this.taskGroupFactory = taskGroupFactory;
     }
@@ -42,16 +39,16 @@ public class MiniJiraAppService {
     public List<TaskGroupResponse> getAllTaskGroups() {
         List<TaskGroup> taskLists = taskGroupDomainRepository.findAll();
         return taskLists.stream()
-                .map(this::mapToTaskListResponse)
+                .map(this::mapTaskGroupToResponse)
                 .toList();
     }
 
     public Optional<TaskGroupResponse> findById(Long id) {
         Optional<TaskGroup> taskList = taskGroupDomainRepository.findById(id);
-        return taskList.map(this::mapToTaskListResponse);
+        return taskList.map(this::mapTaskGroupToResponse);
     }
 
-    private TaskGroupResponse mapToTaskListResponse(TaskGroup taskList) {
+    private TaskGroupResponse mapTaskGroupToResponse(TaskGroup taskList) {
         long totalEstimation = taskList.totalEstimation().longValue();
         return new TaskGroupResponse(taskList.getId(), taskList.getName(), taskList.getStatus().name(), totalEstimation);
     }
@@ -60,7 +57,7 @@ public class MiniJiraAppService {
         Optional<TaskGroup> groupById = taskGroupDomainRepository.findById(taskCreationRequest.taskGroupId());
         if (groupById.isPresent()) {
             TaskGroup taskGroup = groupById.get();
-            return taskGroupFactory.validateUniqueTaskName(taskCreationRequest.name())
+            return taskGroupFactory.validateUniqueTaskName(taskCreationRequest.name(), null)
                     .flatMap(_ ->
                         taskGroup.addTask(
                             taskCreationRequest.name(),
@@ -111,7 +108,7 @@ public class MiniJiraAppService {
         return Try.of(() -> {
             TaskGroup taskGroup = taskGroupDomainRepository.findById(groupId)
                 .orElseThrow(() -> new NotFoundException("Task Group not found"));
-            taskGroupFactory.validateUniqueTaskName(request.name()).orElseThrow();
+            taskGroupFactory.validateUniqueTaskName(request.name(), taskId).orElseThrow();
             taskGroup.editTask(taskId, request.name(), request.description(), request.estimation()).orElseThrow();
             taskGroupDomainRepository.saveEditedTasks(taskGroup);
             return taskGroupDomainRepository.findById(groupId).get().getTasks()
@@ -122,15 +119,5 @@ public class MiniJiraAppService {
     private TaskResponse mapTaskToTaskResponse(Task t) {
         int estimationAsInt = t.getEstimation() != null ? t.getEstimation().intValue() : 0;
         return new TaskResponse(t.getId(), t.getName(), t.getDescription(), estimationAsInt);
-    }
-
-    public Long startIteration(Long groupId, LocalDateTime now, LocalDateTime plusDays) {
-        Optional<TaskGroup> taskGroup = taskGroupDomainRepository.findById(groupId);
-        if (taskGroup.isEmpty()) {
-            return null; // TODO return error
-        }
-        TaskGroup tp = taskGroup.get();
-        Iteration iteration = tp.startIteration(now, plusDays);
-        return taskGroupDomainRepository.saveNewIteration(iteration);
     }
 }

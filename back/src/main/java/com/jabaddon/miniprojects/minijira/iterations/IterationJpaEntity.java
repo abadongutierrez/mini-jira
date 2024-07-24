@@ -1,4 +1,4 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.iterations;
 
 import java.time.LocalDateTime;
 

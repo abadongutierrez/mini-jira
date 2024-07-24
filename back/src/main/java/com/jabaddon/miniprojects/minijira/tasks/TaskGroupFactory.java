@@ -1,20 +1,18 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.tasks;
 
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.typemeta.funcj.control.Either;
 import org.typemeta.funcj.control.Try;
-import org.typemeta.funcj.control.Validated;
 
 import com.jabaddon.miniprojects.minijira.dto.NewTaskGroupRequest;
 
 
 @Service
 class TaskGroupFactory {
-    private final TaskGroupDomainRepository taskGroupRepository;
+    private final DomainRepository taskGroupRepository;
 
-    public TaskGroupFactory(TaskGroupDomainRepository taskGroupRepository) {
+    public TaskGroupFactory(DomainRepository taskGroupRepository) {
         this.taskGroupRepository = taskGroupRepository;
     }
 
@@ -39,8 +37,9 @@ class TaskGroupFactory {
         return Try.success(request);
     }
 
-    public Try<String> validateUniqueTaskName(String name) {
-        boolean findByName = taskGroupRepository.existsTaskByName(name);
+    public Try<String> validateUniqueTaskName(String name, Long taskId) {
+        boolean findByName = taskId == null ?
+            taskGroupRepository.existsTaskByName(name) : taskGroupRepository.existsTaskByName(name, taskId);
         if (findByName) {
             return Try.failure(new IllegalArgumentException("Task name already exists"));
         }

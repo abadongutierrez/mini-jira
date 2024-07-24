@@ -1,12 +1,10 @@
-package com.jabaddon.miniprojects.minijira;
+package com.jabaddon.miniprojects.minijira.tasks;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.typemeta.funcj.control.Either;
 import org.typemeta.funcj.control.Try;
 
 import com.jabaddon.miniprojects.minijira.errors.NotFoundException;
@@ -118,12 +116,6 @@ class TaskGroup {
         taskList.add(newTask);
     }
 
-    public Iteration startIteration(LocalDateTime startAt, LocalDateTime endAt) {
-        InnerIteration iteration = new InnerIteration(this, startAt, endAt);
-        iteration.createInitialCommitment();
-        return iteration;
-    }
-
     @Getter
     private class InnerTask implements Task {
         private Long id;
@@ -141,45 +133,6 @@ class TaskGroup {
             this.id = id;
             this.name = name;
             this.description = description;
-            this.estimation = estimation;
-        }
-    }
-
-    @Getter
-    private class InnerIteration implements Iteration {
-        private Long id;
-        private final TaskGroup taskGroup;
-        private final LocalDateTime startDate;
-        private final LocalDateTime endDate;
-
-        public InnerIteration(TaskGroup taskGroup, LocalDateTime startAt, LocalDateTime endAt) {
-            this.taskGroup = taskGroup;
-            this.startDate = startAt;
-            this.endDate = endAt;
-        }
-
-        public void createInitialCommitment() {
-            taskGroup.getTasks().forEach(task -> {
-                // create commitment
-                InnerTaskCommitment commitment = new InnerTaskCommitment(task.getId(), task.getEstimation());
-            });
-        }
-
-        @Override
-        public Double totalEstimation() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'totalEstimation'");
-        }
-    }
-
-    @Getter
-    private class InnerTaskCommitment {
-        private Long id;
-        private final Long taskId;
-        private final Double estimation;
-
-        public InnerTaskCommitment(Long taskId, Double estimation) {
-            this.taskId = taskId;
             this.estimation = estimation;
         }
     }
