@@ -55,8 +55,27 @@
     >
         Render Trigger
     </button>
+    <button hx-get="/render-swap-oob"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Swap OOB
+    </button>
+    <button hx-get="/render-shopping-cart"
+        hx-trigger="click"
+        hx-target="#name-div"
+        hx-swap="innerHTML"
+        hx-indicator="#indicator"
+    >
+        Render Shopping Cart
+    </button>
     <div id="indicator" class="htmx-indicator">Loading...</div>
     <div id="name-div"></div>
+
+    <div id="oob-target-2" style="color: red">OOB Target 2</div> 
+    <div id="oob-target-3" style="color: blue">OOB Target 3</div> 
 
     
     <script>

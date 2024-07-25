@@ -1,0 +1,15 @@
+<ul>
+    {{#cartItems}}
+    <li>
+        <h3>{{product.name}}</h3>
+        <p>Price: ${{product.price}}</p>
+        <p>Quantity: {{quantity}}</p>
+        <button hx-post="/remove-from-cart/{{product.id}}"
+            hx-trigger="click"
+            hx-target="#product-section"
+            hx-swap="innerHTML"
+            hx-indicator="#indicator"
+            data-product-id="{{product.id}}">Remove</button>
+    </li>
+    {{/cartItems}}
+</ul>

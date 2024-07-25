@@ -5,6 +5,7 @@ import org.springframework.boot.runApplication
 import org.springframework.stereotype.Controller // Add this import statement
 import org.springframework.web.bind.annotation.GetMapping // Add this import statement
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.ui.Model // Add this import statement
 
 @SpringBootApplication
@@ -16,6 +17,12 @@ fun main(args: Array<String>) {
 
 @Controller
 class IndexController {
+	private val cartService: CartService
+
+	constructor(cartService: CartService) {
+		this.cartService = cartService
+	}
+
 	@GetMapping("/")
 	fun index(model: Model): String {
 		model.addAttribute("name", "Jabaddon")
@@ -74,6 +81,28 @@ class IndexController {
 			Employee(14, "Theon Greyjoy", "Protector of Bran Stark", "Winterfell")
 		))
 		return "render-table"
+	}
+
+	@GetMapping("/render-swap-oob")
+	fun renderSwapOob(model: Model): String {
+		return "render-swap-oob"
+	}
+
+	@GetMapping("/render-shopping-cart")
+	fun renderShoppingCart(model: Model): String {
+		model.addAttribute("cartItems", cartService.cartItems())
+		model.addAttribute("total", cartService.getOrderTotal())
+		model.addAttribute("subtotal", cartService.getOrderSubtotal())
+		return "render-shopping-cart"
+	}
+
+	@PostMapping("/remove-from-cart/{productId}")
+	fun removeFromCart(@PathVariable productId: String, model: Model): String {
+		cartService.removeCartItemByProductId(productId)
+		model.addAttribute("cartItems", cartService.cartItems())
+		model.addAttribute("total", cartService.getOrderTotal())
+		model.addAttribute("subtotal", cartService.getOrderSubtotal())
+		return "render-shopping-cart-oob"
 	}
 }
 
