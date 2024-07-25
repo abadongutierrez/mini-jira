@@ -51,6 +51,9 @@ class CartService {
 
 	// Method to get the order subtotal
 	fun getOrderSubtotal(): Double {
+        if (cartItems.isEmpty()) {
+            return 0.0
+        }
 		return cartItems.sumOf { it.product.price * it.quantity }
 	}
 
@@ -62,7 +65,7 @@ class CartService {
 	// Method to calculate fees
 	private fun calculateFees(): Double {
 		// Add your fee calculation logic here
-		return 5.0
+		return if (getOrderSubtotal() > 0.0) 5.0 else 0.0
 	}
 
     @PostConstruct
